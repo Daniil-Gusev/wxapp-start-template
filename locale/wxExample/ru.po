@@ -1,0 +1,13 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "&View"
+msgstr "&Вид"
+
+msgid "Exit request"
+msgstr "Запрос на выход"
+
+msgid "You have unsaved data! Are you sure you want to exit?"
+msgstr "У вас есть несохраненные данные! Вы уверены, что хотите выйти?"

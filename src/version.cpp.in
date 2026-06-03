@@ -1,0 +1,6 @@
+const char* APP_NAME = "@PROJECT_NAME@";
+const char* APP_VERSION = "@PROJECT_VERSION@";
+const char* APP_REVISION = "@PROJECT_REVISION@";
+const char* APP_VENDOR = "DaniilGusev";
+const char* APP_DESCRIPTION = "Заглушка для описания.";
+const char* APP_COPYRIGHT = "(c) 2026 Daniil Gusev";
