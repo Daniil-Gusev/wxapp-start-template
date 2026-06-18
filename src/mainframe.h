@@ -3,6 +3,8 @@
 #include <wx/frame.h>
 #include <wx/menu.h>
 #include <wx/string.h>
+#include <wx/utils.h>
+#include <wx/windowid.h>
 
 class MainFrame : public wxFrame {
  public:
@@ -18,13 +20,11 @@ class MainFrame : public wxFrame {
   wxMenu* CreateHelpMenu();
   void CreateMainPanel();
   void BindEvents();
-  void SaveGeometry();
-  bool RestoreGeometry();
   void OnAbout(wxCommandEvent& event);
   void OnCloseMenu(wxCommandEvent& event);
   void OnExit(wxCommandEvent& event);
   void OnCloseWindow(wxCloseEvent& event);
   void OnToggleFullScreen(wxCommandEvent& event);
 
-  enum { ID_TOGGLE_FULLSCREEN = wxID_HIGHEST + 1 };
+  inline static wxWindowID ID_TOGGLE_FULLSCREEN = wxNewId();
 };
