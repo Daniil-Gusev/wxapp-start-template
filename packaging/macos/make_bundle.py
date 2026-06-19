@@ -129,7 +129,8 @@ def main():
     install_translations(src_root, prefix, resources, bundle_name)
     patch_plist_localizations(contents)
 
-    dmg_path = prefix / f"{bundle_name}-{version}.dmg"
+    out_dir = Path(os.environ.get("PKG_OUT_DIR", prefix))
+    dmg_path = out_dir / f"{bundle_name}-{version}.dmg"
     create_dmg(app_path, dmg_path, bundle_name, version, icns_dst if icns_dst.exists() else None)
 
 if __name__ == "__main__":

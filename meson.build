@@ -82,13 +82,19 @@ if host_system == 'darwin'
         output:        'Info.plist',
         configuration: bundle_conf,
     )
-
-    meson.add_install_script(
-        find_program('python3'),
-        meson.project_source_root() / 'packaging' / 'macos' / 'make_bundle.py',
-        bundle_name,
-        meson.project_version(),
-    )
 endif
 
 subdir('locale')
+
+run_target('package',
+    command: [
+        find_program('python3'),
+        meson.project_source_root() / 'packaging' / 'package.py',
+        bundle_name,
+        meson.project_version(),
+        meson.project_build_root(),
+        meson.project_source_root(),
+        host_system,
+        get_option('prefix')
+    ]
+)
