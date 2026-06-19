@@ -1,0 +1,77 @@
+!include "MUI2.nsh"
+
+; These values are injected by Meson during configure_file
+!define APP_NAME "@APP_NAME@"
+!define APP_VERSION "@APP_VERSION@"
+!define REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
+
+Name "${APP_NAME}"
+OutFile "{{OUT_FILE}}"
+InstallDir "$PROGRAMFILES64\${APP_NAME}"
+RequestExecutionLevel admin
+
+BrandingText "${APP_NAME} Setup v${APP_VERSION}" 
+
+!define MUI_ABORTWARNING
+
+; Modern UI Wizard Pages
+!insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
+!insertmacro MUI_LANGUAGE "English"
+
+; SECTION 1: Core application files (Hidden and Mandatory)
+Section ""
+    SetShellVarContext all
+
+    SetOutPath "$INSTDIR"
+    File /r "{{STAGING_DIR}}/*.*"
+    
+    WriteUninstaller "$INSTDIR\uninstall.exe"
+    
+    ; Windows Add/Remove Programs Registry Entries
+    WriteRegStr HKLM "${REG_KEY}" "DisplayName" "${APP_NAME}"
+    WriteRegStr HKLM "${REG_KEY}" "DisplayVersion" "${APP_VERSION}"
+    WriteRegStr HKLM "${REG_KEY}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+    WriteRegStr HKLM "${REG_KEY}" "QuietUninstallString" '"$INSTDIR\uninstall.exe" /S'
+    WriteRegStr HKLM "${REG_KEY}" "DisplayIcon" "$INSTDIR\${APP_NAME}.exe"
+    WriteRegDWORD HKLM "${REG_KEY}" "NoModify" 1
+    WriteRegDWORD HKLM "${REG_KEY}" "NoRepair" 1
+SectionEnd
+
+; SECTION 2: Start Menu Shortcut
+Section "Start Menu Shortcut" SecStartMenu
+    SetShellVarContext all
+    CreateDirectory "$SMPROGRAMS\${APP_NAME}"
+    CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe"
+    CreateShortcut "$SMPROGRAMS\${APP_NAME}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
+SectionEnd
+
+; SECTION 3: Desktop Shortcut
+Section "Desktop Shortcut" SecDesktop
+    SetShellVarContext all
+    CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe"
+SectionEnd
+
+; Uninstaller Section
+Section "Uninstall"
+    SetShellVarContext all
+
+    Delete "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk"
+    Delete "$SMPROGRAMS\${APP_NAME}\Uninstall ${APP_NAME}.lnk"
+    RMDir "$SMPROGRAMS\${APP_NAME}"
+    Delete "$DESKTOP\${APP_NAME}.lnk"
+    
+    Delete "$INSTDIR\${APP_NAME}.exe"
+    RMDir /r "$INSTDIR\locale"
+    Delete "$INSTDIR\uninstall.exe"
+    RMDir "$INSTDIR"
+    
+    DeleteRegKey HKLM "${REG_KEY}"
+SectionEnd

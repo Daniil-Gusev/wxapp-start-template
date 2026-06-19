@@ -82,6 +82,16 @@ if host_system == 'darwin'
         output:        'Info.plist',
         configuration: bundle_conf,
     )
+elif host_system == 'windows'
+    conf_data = configuration_data()
+    conf_data.set('APP_NAME', meson.project_name())
+    conf_data.set('APP_VERSION', meson.project_version())
+    
+    configure_file(
+        input: 'packaging/windows/installer.nsi.in',
+        output: 'installer.nsi',
+        configuration: conf_data
+    )
 endif
 
 subdir('locale')

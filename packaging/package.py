@@ -27,7 +27,7 @@ def main():
         )
 
         if prefix_path.is_absolute():
-            relative_prefix = Path(*prefix_path.parts[1:]) # Отрезаем '/' или 'C:\'
+            relative_prefix = Path(*prefix_path.parts[1:])
             drive = prefix_path.drive
             if drive:
                 install_prefix = destdir / drive.replace(':', '').lower() / relative_prefix
