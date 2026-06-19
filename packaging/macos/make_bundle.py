@@ -10,6 +10,11 @@ def run(cmd: list, **kwargs) -> subprocess.CompletedProcess:
         sys.exit(result.returncode)
     return result
 
+def check_tool(name: str, hint: str):
+    if shutil.which(name) is None:
+        print(f"error: {name} not found, install with: {hint}", file=sys.stderr)
+        sys.exit(1)
+
 def get_wx_dylibs(binary: Path) -> list[str]:
     result = subprocess.run(
         ["otool", "-L", str(binary)],
@@ -51,17 +56,43 @@ def patch_plist_localizations(contents: Path):
     with open(plist_path, "wb") as f:
         plistlib.dump(plist, f)
 
+def create_dmg(app_path: Path, dmg_path: Path, bundle_name: str, version: str, icns_path: Path | None):
+    if dmg_path.exists():
+        dmg_path.unlink()
+
+    cmd = [
+        "create-dmg",
+        "--volname", f"{bundle_name} {version}",
+        "--window-size", "600", "400",
+        "--icon-size", "100",
+        "--icon", f"{bundle_name}.app", "150", "190",
+        "--hide-extension", f"{bundle_name}.app",
+        "--app-drop-link", "450", "190",
+    ]
+    if icns_path is not None and icns_path.exists():
+        cmd += ["--volicon", str(icns_path)]
+    cmd += [str(dmg_path), str(app_path)]
+
+    result = subprocess.run(cmd)
+    if result.returncode != 0 and not dmg_path.exists():
+        print(f"error: create-dmg failed with code {result.returncode}", file=sys.stderr)
+        sys.exit(result.returncode)
+
 def main():
     if len(sys.argv) < 3:
         print(f"Usage: {sys.argv[0]} <bundle_name> <version>", file=sys.stderr)
         sys.exit(1)
 
+    check_tool("create-dmg", "brew install create-dmg")
+
     bundle_name = sys.argv[1]
+    version     = sys.argv[2]
     prefix     = Path(os.environ["MESON_INSTALL_PREFIX"])
     build_root = Path(os.environ.get("MESON_PROJECT_BUILD_ROOT") or os.environ["MESON_BUILD_ROOT"])
     src_root   = Path(os.environ["MESON_SOURCE_ROOT"])
 
-    contents   = prefix / f"{bundle_name}.app" / "Contents"
+    app_path   = prefix / f"{bundle_name}.app"
+    contents   = app_path / "Contents"
     macos_dir  = contents / "MacOS"
     resources  = contents / "Resources"
     frameworks = contents / "Frameworks"
@@ -81,24 +112,25 @@ def main():
         sys.exit(1)
     shutil.copy2(plist, contents / "Info.plist")
 
-    icns = src_root / "assets" / "app.icns"
-    if icns.exists():
-        shutil.copy2(icns, resources / "app.icns")
+    icns_src = src_root / "assets" / "app.icns"
+    icns_dst = resources / "app.icns"
+    if icns_src.exists():
+        shutil.copy2(icns_src, icns_dst)
 
     wx_dylibs = get_wx_dylibs(macos_dir / bundle_name)
     if wx_dylibs:
-        dylibbundler = shutil.which("dylibbundler")
-        if not dylibbundler:
-            print("error: dylibbundler not found, install with: brew install dylibbundler", file=sys.stderr)
-            sys.exit(1)
+        check_tool("dylibbundler", "brew install dylibbundler")
         run([
-            dylibbundler, "-od", "-b",
+            "dylibbundler", "-od", "-b",
             "-x", str(macos_dir / bundle_name),
             "-d", str(frameworks),
             "-p", "@executable_path/../Frameworks",
         ])
     install_translations(src_root, prefix, resources, bundle_name)
     patch_plist_localizations(contents)
+
+    dmg_path = prefix / f"{bundle_name}-{version}.dmg"
+    create_dmg(app_path, dmg_path, bundle_name, version, icns_dst if icns_dst.exists() else None)
 
 if __name__ == "__main__":
     main()
