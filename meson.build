@@ -71,6 +71,35 @@ app_ex = executable(bundle_name,
     install: true
 )
 
+dep_check_tool = ''
+dep_check_kind = ''
+dep_check_wx_libs = []
+
+if host_system == 'windows'
+    if cpp.get_id() in ['msvc', 'clang-cl']
+        dep_check_kind = 'dumpbin'
+        dep_check_prog = find_program('dumpbin', required: false)
+    else
+        dep_check_kind = 'objdump'
+        dep_check_prog = find_program('objdump', required: false)
+    endif
+    if dep_check_prog.found()
+        dep_check_tool = dep_check_prog.full_path()
+    endif
+elif host_system == 'linux'
+    dep_check_kind = 'ldd'
+    dep_check_prog = find_program('ldd', required: false)
+    if dep_check_prog.found()
+        dep_check_tool = dep_check_prog.full_path()
+    endif
+    wx_libs_flags = wx_dep.get_variable(configtool: 'libs', default_value: '').split()
+    foreach flag : wx_libs_flags
+        if flag.startswith('-lwx')
+            dep_check_wx_libs += flag.substring(2)
+        endif
+    endforeach
+endif
+
 if host_system == 'darwin'
     bundle_conf = configuration_data()
     bundle_conf.set('BUNDLE_NAME',       bundle_name)
@@ -92,6 +121,14 @@ elif host_system == 'windows'
         output: 'installer.nsi',
         configuration: conf_data
     )
+elif host_system == 'linux'
+    desktop_conf = configuration_data()
+    desktop_conf.set('APP_NAME', bundle_name)
+    configure_file(
+        input: 'packaging/linux/app.desktop.in',
+        output: bundle_name + '.desktop',
+        configuration: desktop_conf
+    )
 endif
 
 subdir('locale')
@@ -106,5 +143,11 @@ run_target('package',
         meson.project_source_root(),
         host_system,
         get_option('prefix')
+    ],
+    env: [
+        'DEP_CHECK_TOOL=' + dep_check_tool,
+        'DEP_CHECK_KIND=' + dep_check_kind,
+        'DEP_CHECK_WX_LIBS=' + ':'.join(dep_check_wx_libs),
+        'TARGET_ARCH=' + cpu,
     ]
 )

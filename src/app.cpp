@@ -41,11 +41,17 @@ void App::SetupLocalization() {
   wxUILocale::UseDefault();
   auto* tr = new wxTranslations();
   wxTranslations::Set(tr);
-#ifdef __WXMSW__
   wxFileName exePath(wxStandardPaths::Get().GetExecutablePath());
-  wxString localeDir = exePath.GetPath() + wxFILE_SEP_PATH + "locale";
+  wxString baseDir = exePath.GetPath();
+#ifdef __WXMSW__
+  wxString localeDir = baseDir + wxFILE_SEP_PATH + "locale";
+  wxFileTranslationsLoader::AddCatalogLookupPathPrefix(localeDir);
+#elif defined(__linux__)
+  wxString localeDir = baseDir + wxFILE_SEP_PATH + ".." + wxFILE_SEP_PATH +
+                       "share" + wxFILE_SEP_PATH + "locale";
   wxFileTranslationsLoader::AddCatalogLookupPathPrefix(localeDir);
 #endif
+
   tr->AddCatalog(APP_NAME);
   tr->AddCatalog("wxstd");
 }
