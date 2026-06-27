@@ -82,7 +82,7 @@ void MainFrame::OnCloseWindow(wxCloseEvent& event) {
     }
   }
   wxPersistenceManager::Get().SaveAndUnregister(this);
-  Destroy();
+  event.Skip();
 }
 
 void MainFrame::OnExit(wxCommandEvent&) {
