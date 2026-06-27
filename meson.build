@@ -9,13 +9,7 @@ project_args = []
 dependencies = []
 
 cpu = host_machine.cpu_family()
-if cpp.get_id() != 'msvc'
-    if cpu == 'x86_64'
-        project_args += '-m64'
-    elif cpu == 'x86'
-        project_args += '-m32'
-    endif
-endif
+py3 = find_program('python3')
 
 wx_dep = dependency('wxwidgets', required: true)
 dependencies += wx_dep
@@ -26,10 +20,15 @@ if git.found()
     git_rev = run_command(git, 'rev-parse', '--short', 'HEAD', check: false).stdout().strip()
 endif
 
+subdir('packaging')
+
 conf_data = configuration_data()
-conf_data.set('PROJECT_NAME', meson.project_name())
-conf_data.set('PROJECT_VERSION', meson.project_version())
+conf_data.set('PROJECT_NAME',     meson.project_name())
+conf_data.set('PROJECT_VERSION',  meson.project_version())
 conf_data.set('PROJECT_REVISION', git_rev)
+conf_data.set('APP_VENDOR',       vendor_name)
+conf_data.set('APP_DESCRIPTION',  app_description)
+conf_data.set('APP_COPYRIGHT',    '(c) ' + copyright_year + ' ' + copyright_holder)
 
 version_cpp = configure_file(
     input: 'src/version.cpp.in',
@@ -100,42 +99,18 @@ elif host_system == 'linux'
     endforeach
 endif
 
+pkg_build_dir = ''
 if host_system == 'darwin'
-    bundle_conf = configuration_data()
-    bundle_conf.set('BUNDLE_NAME',       bundle_name)
-    bundle_conf.set('BUNDLE_IDENTIFIER', 'com.example.' + bundle_name.to_lower())
-    bundle_conf.set('PROJECT_VERSION',   meson.project_version())
-
-    plist_out = configure_file(
-        input:         'packaging/macos/Info.plist.in',
-        output:        'Info.plist',
-        configuration: bundle_conf,
-    )
+    subdir('packaging/macos')
 elif host_system == 'windows'
-    conf_data = configuration_data()
-    conf_data.set('APP_NAME', meson.project_name())
-    conf_data.set('APP_VERSION', meson.project_version())
-    
-    configure_file(
-        input: 'packaging/windows/installer.nsi.in',
-        output: 'installer.nsi',
-        configuration: conf_data
-    )
+    subdir('packaging/windows')
 elif host_system == 'linux'
-    desktop_conf = configuration_data()
-    desktop_conf.set('APP_NAME', bundle_name)
-    configure_file(
-        input: 'packaging/linux/app.desktop.in',
-        output: bundle_name + '.desktop',
-        configuration: desktop_conf
-    )
+    subdir('packaging/linux')
 endif
-
-subdir('locale')
 
 run_target('package',
     command: [
-        find_program('python3'),
+        py3,
         meson.project_source_root() / 'packaging' / 'package.py',
         bundle_name,
         meson.project_version(),
@@ -149,5 +124,8 @@ run_target('package',
         'DEP_CHECK_KIND=' + dep_check_kind,
         'DEP_CHECK_WX_LIBS=' + ':'.join(dep_check_wx_libs),
         'TARGET_ARCH=' + cpu,
+        'PKG_BUILD_DIR=' + pkg_build_dir,
     ]
 )
+
+subdir('locale')

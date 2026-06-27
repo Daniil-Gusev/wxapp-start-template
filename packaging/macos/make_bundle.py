@@ -43,7 +43,7 @@ def install_translations(src_root: Path, build_prefix: Path, resources: Path, bu
                 lproj.mkdir(exist_ok=True)
                 shutil.copy2(mo_file, lproj / f"{domain}.mo")
 
-def patch_plist_localizations(contents: Path):
+def patch_plist(contents: Path, icon_filename: str | None = None):
     import plistlib
     plist_path = contents / "Info.plist"
     with open(plist_path, "rb") as f:
@@ -51,7 +51,11 @@ def patch_plist_localizations(contents: Path):
 
     langs = [d.stem for d in (contents / "Resources").iterdir()
              if d.suffix == ".lproj"]
-    plist["CFBundleLocalizations"] = sorted(langs)
+    if langs:
+        plist["CFBundleLocalizations"] = sorted(langs)
+
+    if icon_filename:
+        plist["CFBundleIconFile"] = icon_filename
 
     with open(plist_path, "wb") as f:
         plistlib.dump(plist, f)
@@ -87,8 +91,8 @@ def main():
 
     bundle_name = sys.argv[1]
     version     = sys.argv[2]
-    prefix     = Path(os.environ["MESON_INSTALL_PREFIX"])
-    build_root = Path(os.environ.get("MESON_PROJECT_BUILD_ROOT") or os.environ["MESON_BUILD_ROOT"])
+    prefix      = Path(os.environ["MESON_INSTALL_PREFIX"])
+    pkg_build_dir = Path(os.environ["PKG_BUILD_DIR"])
     src_root   = Path(os.environ["MESON_SOURCE_ROOT"])
 
     app_path   = prefix / f"{bundle_name}.app"
@@ -106,7 +110,7 @@ def main():
         sys.exit(1)
     shutil.copy2(executable, macos_dir / bundle_name)
 
-    plist = build_root / "Info.plist"
+    plist = pkg_build_dir / "Info.plist"
     if not plist.exists():
         print(f"error: Info.plist not found: {plist}", file=sys.stderr)
         sys.exit(1)
@@ -114,8 +118,10 @@ def main():
 
     icns_src = src_root / "assets" / "app.icns"
     icns_dst = resources / "app.icns"
+    has_icon = False
     if icns_src.exists():
         shutil.copy2(icns_src, icns_dst)
+        has_icon = True
 
     wx_dylibs = get_wx_dylibs(macos_dir / bundle_name)
     if wx_dylibs:
@@ -126,12 +132,13 @@ def main():
             "-d", str(frameworks),
             "-p", "@executable_path/../Frameworks",
         ])
+        
     install_translations(src_root, prefix, resources, bundle_name)
-    patch_plist_localizations(contents)
+    patch_plist(contents, icon_filename="app.icns" if has_icon else None)
 
     out_dir = Path(os.environ.get("PKG_OUT_DIR", prefix))
     dmg_path = out_dir / f"{bundle_name}-{version}.dmg"
-    create_dmg(app_path, dmg_path, bundle_name, version, icns_dst if icns_dst.exists() else None)
+    create_dmg(app_path, dmg_path, bundle_name, version, icns_dst if has_icon else None)
 
 if __name__ == "__main__":
     main()

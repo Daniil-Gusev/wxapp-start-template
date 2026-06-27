@@ -1,0 +1,5 @@
+vendor_name      = 'YourName'
+copyright_holder = 'Your holder'
+copyright_year = '2026'
+app_description = 'Your description'
+bundle_id_prefix = 'com.example'

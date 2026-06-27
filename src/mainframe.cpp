@@ -7,6 +7,7 @@
 #include <wx/persist.h>
 #include <wx/persist/toplevel.h>
 #include <wx/sizer.h>
+#include <wx/translation.h>
 
 #include "mainpanel.h"
 #include "version.h"
@@ -42,7 +43,7 @@ wxMenu* MainFrame::CreateFileMenu() {
 wxMenu* MainFrame::CreateViewMenu() {
   auto* viewMenu = new wxMenu();
 #ifndef __WXMAC__
-  viewMenu->AppendCheckItem(ID_TOGGLE_FULLSCREEN, "Full Screen\tF11");
+  viewMenu->AppendCheckItem(ID_TOGGLE_FULLSCREEN, _("Full Screen\tF11"));
   Bind(wxEVT_MENU, &MainFrame::OnToggleFullScreen, this, ID_TOGGLE_FULLSCREEN);
 #endif
   return viewMenu;
@@ -90,19 +91,17 @@ void MainFrame::OnExit(wxCommandEvent&) {
 
 void MainFrame::OnAbout(wxCommandEvent&) {
   wxAboutDialogInfo info;
-  info.SetName(APP_NAME);
+  info.SetName(wxGetTranslation(APP_NAME));
   info.SetVersion(APP_REVISION, APP_VERSION);
-  info.SetDescription(APP_DESCRIPTION);
-  info.SetCopyright(APP_COPYRIGHT);
+  info.SetDescription(wxGetTranslation(APP_DESCRIPTION));
+  info.SetCopyright(wxGetTranslation(APP_COPYRIGHT));
   wxAboutBox(info, this);
 }
 
-void MainFrame::OnToggleFullScreen(wxCommandEvent&) {
 #ifndef __WXMAC__
+void MainFrame::OnToggleFullScreen(wxCommandEvent&) {
   ShowFullScreen(!IsFullScreen());
   auto* menuBar = GetMenuBar();
-  if (menuBar) {
-    menuBar->Check(ID_TOGGLE_FULLSCREEN, IsFullScreen());
-  }
-#endif
+  if (menuBar) menuBar->Check(ID_TOGGLE_FULLSCREEN, IsFullScreen());
 }
+#endif

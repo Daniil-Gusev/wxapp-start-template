@@ -6,7 +6,7 @@
 
 Name "${APP_NAME}"
 OutFile "{{OUT_FILE}}"
-InstallDir "$PROGRAMFILES64\${APP_NAME}"
+InstallDir "@PROGRAM_FILES_DIR@\${APP_NAME}"
 RequestExecutionLevel admin
 
 BrandingText "${APP_NAME} Setup v${APP_VERSION}" 
@@ -94,6 +94,7 @@ BrandingText "${APP_NAME} Setup v${APP_VERSION}"
 ; SECTION 1: Core application files (Hidden and Mandatory)
 Section ""
     SetShellVarContext all
+    @SET_REG_VIEW@
 
     SetOutPath "$INSTDIR"
     File /r "{{STAGING_DIR}}/*.*"
@@ -127,6 +128,7 @@ SectionEnd
 ; Uninstaller Section
 Section "Uninstall"
     SetShellVarContext all
+    @SET_REG_VIEW@
 
     Delete "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk"
     Delete "$SMPROGRAMS\${APP_NAME}\Uninstall ${APP_NAME}.lnk"

@@ -6,8 +6,14 @@ msgstr ""
 msgid "&View"
 msgstr "&Вид"
 
+msgid "Full Screen\tF11"
+msgstr "Полноэкранный режим\tF11"
+
 msgid "Exit request"
 msgstr "Запрос на выход"
 
 msgid "You have unsaved data! Are you sure you want to exit?"
 msgstr "У вас есть несохраненные данные! Вы уверены, что хотите выйти?"
+
+msgid "Your interface will be here."
+msgstr "Ваш интерфейс будет здесь."

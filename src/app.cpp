@@ -23,10 +23,10 @@ bool App::OnInit() {
   if (!wxApp::OnInit()) return false;
   SetAppName(APP_NAME);
   SetVendorName(APP_VENDOR);
+  SetupLocalization();
   m_instanceChecker = std::make_unique<wxSingleInstanceChecker>();
   if (m_instanceChecker->IsAnotherRunning())
     wxLogFatalError(_("Application '%s' is already running."), GetAppName());
-  SetupLocalization();
   if (!SetupLogging()) return false;
 #ifdef __WXMAC__
   this->SetExitOnFrameDelete(false);
@@ -46,7 +46,7 @@ void App::SetupLocalization() {
 #ifdef __WXMSW__
   wxString localeDir = baseDir + wxFILE_SEP_PATH + "locale";
   wxFileTranslationsLoader::AddCatalogLookupPathPrefix(localeDir);
-#elif defined(__linux__)
+#else
   wxString localeDir = baseDir + wxFILE_SEP_PATH + ".." + wxFILE_SEP_PATH +
                        "share" + wxFILE_SEP_PATH + "locale";
   wxFileTranslationsLoader::AddCatalogLookupPathPrefix(localeDir);
@@ -80,9 +80,8 @@ bool App::SetupLogging() {
 }
 
 void App::CreateMainWindow() {
-  MainFrame* frame = new MainFrame("example");
+  MainFrame* frame = new MainFrame(GetAppName());
   SetTopWindow(frame);
-  frame->Fit();
   frame->Show(true);
   frame->Raise();
   frame->SetFocus();

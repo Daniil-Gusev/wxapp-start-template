@@ -8,11 +8,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from dep_check import linux_unexpected_deps, report, require_tool
 
-def make_tarball(name, version, install_prefix, out_dir, dep_check_tool, wx_lib_names):
+def make_tarball(name, version, arch, install_prefix, out_dir, dep_check_tool, wx_lib_names):
     exe = install_prefix / "bin" / name
     report(linux_unexpected_deps(exe, dep_check_tool, wx_lib_names), exe, "Linux")
 
-    archive_path = out_dir / f"{name}-{version}-linux.tar.gz"
+    archive_path = out_dir / f"{name}-{version}-linux-{arch}.tar.gz"
     root_folder = f"{name}-{version}"
 
     with tarfile.open(archive_path, "w:gz") as tar:
@@ -23,13 +23,13 @@ def make_tarball(name, version, install_prefix, out_dir, dep_check_tool, wx_lib_
 
     print(f"Created {archive_path.name}")
 
-def make_appimage(name, version, install_prefix, build_root, src_root, out_dir, arch):
+def make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, out_dir):
     linuxdeploy = shutil.which("linuxdeploy")
     if not linuxdeploy:
         print("WARNING: 'linuxdeploy' not found on PATH, skipping AppImage creation.", file=sys.stderr)
         return
 
-    desktop = build_root / f"{name}.desktop"
+    desktop = pkg_build_dir / f"{name}.desktop"
     icon = src_root / "assets" / "app.png"
     if not desktop.exists():
         print(f"WARNING: {desktop} not found, skipping AppImage creation.", file=sys.stderr)
@@ -79,7 +79,7 @@ def main():
     version = sys.argv[2]
 
     install_prefix = Path(os.environ["MESON_INSTALL_PREFIX"])
-    build_root = Path(os.environ.get("MESON_PROJECT_BUILD_ROOT") or os.environ["MESON_BUILD_ROOT"])
+    pkg_build_dir = Path(os.environ["PKG_BUILD_DIR"])
     src_root = Path(os.environ["MESON_SOURCE_ROOT"])
     out_dir = Path(os.environ.get("PKG_OUT_DIR", "."))
     arch = os.environ.get("TARGET_ARCH", "")
@@ -93,8 +93,8 @@ def main():
     )
     wx_lib_names = [n for n in os.environ.get("DEP_CHECK_WX_LIBS", "").split(":") if n]
 
-    make_tarball(name, version, install_prefix, out_dir, dep_check_tool, wx_lib_names)
-    make_appimage(name, version, install_prefix, build_root, src_root, out_dir, arch)
+    make_tarball(name, version, arch, install_prefix, out_dir, dep_check_tool, wx_lib_names)
+    make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, out_dir)
 
 if __name__ == "__main__":
     main()
