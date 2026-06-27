@@ -101,16 +101,16 @@ def linux_unexpected_deps(exe: Path, tool: str, wx_lib_names: list[str]) -> list
             unexpected.append(soname)
     return sorted(set(unexpected), key=str.lower)
 
-def report(deps: list[str], exe: Path, platform: str, unresolved: list[str] | None = None):
+def report(deps, exe, platform, unresolved=None) -> bool:
     label = f"[dep-check] {exe.name} ({platform})"
     if not deps:
         print(f"{label}: OK, no unexpected runtime dependencies found")
-        return
+        return True
     print(f"{label}: FAIL, found dependencies that won't be present on a clean machine:", file=sys.stderr)
     for d in deps:
         print(f"  - {d}", file=sys.stderr)
     if unresolved:
-        print(f"{label}: the following could not be located on disk to inspect their own dependencies, but are already counted as unexpected above:", file=sys.stderr)
+        print(f"{label}: the following could not be located on disk...", file=sys.stderr)
         for d in unresolved:
             print(f"  - {d}", file=sys.stderr)
-    sys.exit(1)
+    return False

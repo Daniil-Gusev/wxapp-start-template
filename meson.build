@@ -1,6 +1,6 @@
 project('wxExample', 'cpp',
     version: '0.1.0',
-    default_options: ['cpp_std=c++20', 'buildtype=plain', 'warning_level=3', 'unity=on']
+    default_options: ['cpp_std=c++20', 'buildtype=plain', 'warning_level=3', 'unity=on', 'b_vscrt=static_from_buildtype']
 )
 
 cpp = meson.get_compiler('cpp')

@@ -17,7 +17,8 @@ def resolve_exe(name: str, install_prefix: Path) -> Path:
 def make_portable_zip(name, version, arch, install_prefix, out_dir, dep_check_tool, dep_check_kind) -> Path:
     exe_src = resolve_exe(name, install_prefix)
     unexpected, unresolved = windows_unexpected_deps(exe_src, dep_check_tool, dep_check_kind)
-    report(unexpected, exe_src, "Windows", unresolved=unresolved)
+    if not report(unexpected, exe_src, "Windows", unresolved=unresolved):
+        sys.exit(1)
 
     staging_dir = out_dir / f"{name}_staging"
     if staging_dir.exists():

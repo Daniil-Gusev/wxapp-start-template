@@ -8,9 +8,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from dep_check import linux_unexpected_deps, report, require_tool
 
-def make_tarball(name, version, arch, install_prefix, out_dir, dep_check_tool, wx_lib_names):
+def make_tarball(name, version, arch, install_prefix, out_dir, dep_check_tool, wx_lib_names) -> bool:
     exe = install_prefix / "bin" / name
-    report(linux_unexpected_deps(exe, dep_check_tool, wx_lib_names), exe, "Linux")
+    ok = report(linux_unexpected_deps(exe, dep_check_tool, wx_lib_names), exe, "Linux")
+    if not ok:
+        print("Skipping portable tar.gz .", file=sys.stderr)
+        return False
 
     archive_path = out_dir / f"{name}-{version}-linux-{arch}.tar.gz"
     root_folder = f"{name}-{version}"
@@ -22,21 +25,22 @@ def make_tarball(name, version, arch, install_prefix, out_dir, dep_check_tool, w
                 tar.add(src_path, arcname=f"{root_folder}/{subdir}")
 
     print(f"Created {archive_path.name}")
+    return True
 
-def make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, out_dir):
+def make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, out_dir) -> bool:
     linuxdeploy = shutil.which("linuxdeploy")
     if not linuxdeploy:
         print("WARNING: 'linuxdeploy' not found on PATH, skipping AppImage creation.", file=sys.stderr)
-        return
+        return False
 
     desktop = pkg_build_dir / f"{name}.desktop"
     icon = src_root / "assets" / "app.png"
     if not desktop.exists():
         print(f"WARNING: {desktop} not found, skipping AppImage creation.", file=sys.stderr)
-        return
+        return False
     if not icon.exists():
         print(f"WARNING: {icon} not found, skipping AppImage creation.", file=sys.stderr)
-        return
+        return False
     appdir = out_dir / "AppDir"
     if appdir.exists():
         shutil.rmtree(appdir)
@@ -60,15 +64,14 @@ def make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, 
         "--plugin", "gtk",
         "--output", "appimage",
     ]
-    
+
     result = subprocess.run(cmd, env=env)
     if result.returncode != 0:
         sys.exit(result.returncode)
-
-    print(f"Created {out_file.name}")
-
     if appdir.exists():
         shutil.rmtree(appdir)
+    print(f"Created {out_file.name}")
+    return True
 
 def main():
     if len(sys.argv) < 3:
@@ -93,8 +96,11 @@ def main():
     )
     wx_lib_names = [n for n in os.environ.get("DEP_CHECK_WX_LIBS", "").split(":") if n]
 
-    make_tarball(name, version, arch, install_prefix, out_dir, dep_check_tool, wx_lib_names)
-    make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, out_dir)
+    tarball_ok = make_tarball(name, version, arch, install_prefix, out_dir, dep_check_tool, wx_lib_names)
+    img_ok = make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, out_dir)
+
+    if not tarball_ok and not img_ok:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
