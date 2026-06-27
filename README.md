@@ -168,12 +168,12 @@ mkdir build-static && cd build-static
   --enable-richtext \
   --enable-xrc \
   --with-opengl \
-  --with-curl
+  --with-libcurl
 make -j$(nproc)
 sudo make install
 ```
 
-Adjust `--with-gtk=2` if you need to target very old systems. `--with-curl` is needed for `wxWebRequest`. As with macOS, the packaging pipeline supports dynamic builds (the dep-check step will simply warn rather than skip the tarball if only system-level wx libs are found), but a statically linked binary is more portable and results in a smaller AppImage than a dynamic build where libraries need to be bundled.
+Adjust `--with-gtk=2` if you need to target very old systems. `--with-libcurl` is needed for `wxWebRequest`. As with macOS, the packaging pipeline supports dynamic builds (the dep-check step will simply warn rather than skip the tarball if only system-level wx libs are found), but a statically linked binary is more portable and results in a smaller AppImage than a dynamic build where libraries need to be bundled.
 
 **Configuring the project:**
 
