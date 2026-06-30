@@ -49,9 +49,9 @@ if host_system == 'windows'
 endif
 
 main_sources = files(
-    'src/mainpanel.cpp',
-    'src/mainframe.cpp',
-    'src/app.cpp'
+    'src/ui/app.cpp',
+    'src/ui/mainframe.cpp',
+    'src/ui/mainpanel.cpp',
 )
 
 use_pch = get_option('b_pch')
