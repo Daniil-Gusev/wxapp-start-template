@@ -12,6 +12,12 @@ msgstr "Полноэкранный режим\tF11"
 msgid "Exit request"
 msgstr "Запрос на выход"
 
+msgid "Application '%s' is already running."
+msgstr "Приложение %s уже запущено."
+
+msgid "Unhandled exception: %s"
+msgstr "Необработанное исключение: %s"
+
 msgid "You have unsaved data! Are you sure you want to exit?"
 msgstr "У вас есть несохраненные данные! Вы уверены, что хотите выйти?"
 

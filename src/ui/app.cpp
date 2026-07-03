@@ -97,7 +97,7 @@ bool App::OnExceptionInMainLoop() {
                  _("Error"), wxICON_ERROR);
   } catch (...) {
     wxLogError("Unknown unhandled exception");
-    wxMessageBox(_("Unknown unhandled exception"), _("Error"), wxICON_ERROR);
+    wxMessageBox(_("Unknown exception"), _("Error"), wxICON_ERROR);
   }
   return false;
 }
