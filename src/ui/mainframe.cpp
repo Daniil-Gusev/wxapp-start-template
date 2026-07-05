@@ -61,6 +61,7 @@ void MainFrame::CreateMainPanel() {
   auto* mainContent = new MainPanel(this);
   frameSizer->Add(mainContent, 1, wxEXPAND);
   SetSizer(frameSizer);
+  frameSizer->SetSizeHints(this);
 }
 
 void MainFrame::BindEvents() {
