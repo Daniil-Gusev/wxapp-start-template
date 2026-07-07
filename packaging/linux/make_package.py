@@ -6,7 +6,7 @@ import tarfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from dep_check import linux_unexpected_deps, report, require_tool
+from dep_check import linux_unexpected_deps, linux_links_lib, report, require_tool
 
 def make_tarball(name, version, arch, install_prefix, out_dir, dep_check_tool, wx_lib_names) -> bool:
     exe = install_prefix / "bin" / name
@@ -27,12 +27,13 @@ def make_tarball(name, version, arch, install_prefix, out_dir, dep_check_tool, w
     print(f"Created {archive_path.name}")
     return True
 
-def make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, out_dir) -> bool:
+GTK_LIB_PREFIXES = ["libgtk-3.so", "libgtk-4.so", "libgtk-x11-2.0.so"]
+
+def make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, out_dir, dep_check_tool) -> bool:
     linuxdeploy = shutil.which("linuxdeploy")
     if not linuxdeploy:
         print("WARNING: 'linuxdeploy' not found on PATH, skipping AppImage creation.", file=sys.stderr)
         return False
-
     desktop = pkg_build_dir / f"{name}.desktop"
     icon = src_root / "assets" / "app.png"
     if not desktop.exists():
@@ -44,27 +45,23 @@ def make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, 
     appdir = out_dir / "AppDir"
     if appdir.exists():
         shutil.rmtree(appdir)
-
     exe = install_prefix / "bin" / name
     out_file = out_dir / f"{name}-{version}-{arch}.AppImage"
-
     named_icon = out_dir / f"{name}{icon.suffix}"
     shutil.copy2(icon, named_icon)
-
     env = os.environ.copy()
     env["OUTPUT"] = str(out_file)
     env["ARCH"] = arch
-
     cmd = [
         linuxdeploy,
         "--appdir", str(appdir),
         "--executable", str(exe),
         "--desktop-file", str(desktop),
         "--icon-file", str(named_icon),
-        "--plugin", "gtk",
-        "--output", "appimage",
     ]
-
+    if linux_links_lib(exe, dep_check_tool, GTK_LIB_PREFIXES):
+        cmd += ["--plugin", "gtk"]
+    cmd += ["--output", "appimage"]
     result = subprocess.run(cmd, env=env)
     if result.returncode != 0:
         sys.exit(result.returncode)
@@ -97,7 +94,7 @@ def main():
     wx_lib_names = [n for n in os.environ.get("DEP_CHECK_WX_LIBS", "").split(":") if n]
 
     tarball_ok = make_tarball(name, version, arch, install_prefix, out_dir, dep_check_tool, wx_lib_names)
-    img_ok = make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, out_dir)
+    img_ok = make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, out_dir, dep_check_tool)
 
     if not tarball_ok and not img_ok:
         sys.exit(1)

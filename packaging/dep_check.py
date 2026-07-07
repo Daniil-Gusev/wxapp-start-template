@@ -88,11 +88,14 @@ def windows_unexpected_deps(exe: Path, tool: str, kind: str):
 
     return sorted(unexpected, key=str.lower), sorted(unresolved, key=str.lower)
 
-def linux_unexpected_deps(exe: Path, tool: str, wx_lib_names: list[str]) -> list[str]:
+def _linux_ldd_lines(exe: Path, tool: str):
     out = subprocess.run([tool, str(exe)], capture_output=True, text=True, check=True).stdout
+    return out.splitlines()
+
+def linux_unexpected_deps(exe: Path, tool: str, wx_lib_names: list[str]) -> list[str]:
     patterns = [f"lib{name}.so" for name in wx_lib_names if name]
     unexpected = []
-    for line in out.splitlines():
+    for line in _linux_ldd_lines(exe, tool):
         m = re.match(r"^\s*(\S+)\s*=>", line)
         if not m:
             continue
@@ -100,6 +103,17 @@ def linux_unexpected_deps(exe: Path, tool: str, wx_lib_names: list[str]) -> list
         if any(soname.startswith(p) for p in patterns):
             unexpected.append(soname)
     return sorted(set(unexpected), key=str.lower)
+
+def linux_links_lib(exe: Path, tool: str, lib_prefixes: list[str]) -> bool:
+    for line in _linux_ldd_lines(exe, tool):
+        m = re.match(r"^\s*(\S+)\s*=>", line)
+        soname = m.group(1) if m else None
+        if soname is None:
+            m2 = re.match(r"^\s*(\S+\.so[\d.]*)\s", line)
+            soname = m2.group(1) if m2 else None
+        if soname and any(soname.startswith(p) for p in lib_prefixes):
+            return True
+    return False
 
 def report(deps, exe, platform, unresolved=None) -> bool:
     label = f"[dep-check] {exe.name} ({platform})"
