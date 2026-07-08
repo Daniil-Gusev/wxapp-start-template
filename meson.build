@@ -67,6 +67,7 @@ app_ex = executable(bundle_name,
     dependencies: dependencies,
     cpp_args: project_args,
     cpp_pch: pch_headers,
+    win_subsystem: 'windows',
     install: true
 )
 
