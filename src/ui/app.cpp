@@ -4,6 +4,7 @@
 #include <wx/config.h>
 #include <wx/ffile.h>
 #include <wx/filename.h>
+#include <wx/image.h>
 #include <wx/log.h>
 #include <wx/msgdlg.h>
 #include <wx/stdpaths.h>
@@ -32,6 +33,7 @@ bool App::OnInit() {
   this->SetExitOnFrameDelete(false);
   Bind(wxEVT_ACTIVATE_APP, &App::OnActivate, this);
 #endif
+  wxInitAllImageHandlers();
   wxLogVerbose("%s %s (%s) started.", APP_NAME, APP_VERSION, APP_REVISION);
   CreateMainWindow();
   return true;
