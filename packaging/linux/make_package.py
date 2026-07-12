@@ -65,6 +65,8 @@ def make_appimage(name, version, arch, install_prefix, pkg_build_dir, src_root, 
     result = subprocess.run(cmd, env=env)
     if result.returncode != 0:
         sys.exit(result.returncode)
+    if named_icon.exists():
+        os.remove(named_icon)    
     if appdir.exists():
         shutil.rmtree(appdir)
     print(f"Created {out_file.name}")
