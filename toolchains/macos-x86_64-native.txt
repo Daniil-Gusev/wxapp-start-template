@@ -1,3 +1,9 @@
+[constants]
+arch_flags    = ['-arch', 'x86_64']
+min_version   = ['-mmacosx-version-min=10.10']
+common_flags  = arch_flags + min_version
+availability_flags = ['-Werror=unguarded-availability', '-Werror=unguarded-availability-new']
+
 [binaries]
 c = 'clang'
 cpp = 'clang++'
@@ -7,14 +13,14 @@ ar = 'ar'
 strip = 'strip'
 
 [built-in options]
-c_args = ['-arch', 'x86_64']
-cpp_args = ['-arch', 'x86_64']
-c_link_args = ['-arch', 'x86_64']
-cpp_link_args = ['-arch', 'x86_64']
-objc_args = ['-arch', 'x86_64']
-objcpp_args = ['-arch', 'x86_64']
-objc_link_args = ['-arch', 'x86_64']
-objcpp_link_args = ['-arch', 'x86_64']
+c_args         = common_flags + availability_flags
+cpp_args       = common_flags + availability_flags
+objc_args      = common_flags + availability_flags
+objcpp_args    = common_flags + availability_flags
+c_link_args    = common_flags
+cpp_link_args  = common_flags
+objc_link_args = common_flags
+objcpp_link_args = common_flags
 
 [host_machine]
 system = 'darwin'

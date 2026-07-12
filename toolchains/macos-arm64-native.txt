@@ -1,5 +1,5 @@
 [constants]
-arch_flags    = ['-arch', 'arm64', '-arch', 'x86_64']
+arch_flags    = ['-arch', 'arm64']
 min_version   = ['-mmacosx-version-min=11.0']
 common_flags  = arch_flags + min_version
 availability_flags = ['-Werror=unguarded-availability', '-Werror=unguarded-availability-new']
@@ -24,6 +24,6 @@ objcpp_link_args = common_flags
 
 [host_machine]
 system = 'darwin'
-cpu_family = 'aarch64'
+cpu_family = 'arm64'
 cpu = 'arm64'
 endian = 'little'

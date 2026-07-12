@@ -1,16 +1,21 @@
+[constants]
+mingw_prefix = 'i686-w64-mingw32-'
+link_flags   = ['-static']
+
 [binaries]
-c = 'i686-w64-mingw32-gcc'
-cpp = 'i686-w64-mingw32-g++'
-ar = 'i686-w64-mingw32-ar'
-strip = 'i686-w64-mingw32-strip'
-windres = 'i686-w64-mingw32-windres'
-objdump = 'i686-w64-mingw32-objdump'
+c        = mingw_prefix + 'gcc'
+cpp      = mingw_prefix + 'g++'
+ar       = mingw_prefix + 'ar'
+strip    = mingw_prefix + 'strip'
+windres  = mingw_prefix + 'windres'
+objdump  = mingw_prefix + 'objdump'
 # wx-config windows builds added to PATH
 wx-config = 'wx-config'
 exe_wrapper = 'wine'
 
 [built-in options]
-cpp_link_args = ['-static']
+c_link_args   = link_flags
+cpp_link_args = link_flags
 
 [host_machine]
 system = 'windows'
