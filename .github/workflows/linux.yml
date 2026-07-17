@@ -1,0 +1,70 @@
+name: Linux
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        description: "Build full packages (true) or just test compilation (false)"
+        required: true
+        type: boolean
+      with_webview:
+        description: "Build with wxWebView support (also builds the webkit2gtk-4.0/4.1 dual-variant + dispatcher)"
+        required: false
+        type: string
+        default: "false"
+
+jobs:
+  build:
+    name: ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Compile check
+        if: ${{ !inputs.package }}
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: compile-linux-${{ matrix.arch }}
+          push: false
+          build-args: |
+            WITH_WEBVIEW=${{ inputs.with_webview }}
+          cache-from: type=gha,scope=linux-${{ matrix.arch }}-webview-${{ inputs.with_webview }}
+          cache-to: type=gha,mode=max,scope=linux-${{ matrix.arch }}-webview-${{ inputs.with_webview }}
+
+      - name: Build & package
+        if: ${{ inputs.package }}
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: export-linux-${{ matrix.arch }}
+          push: false
+          outputs: type=local,dest=dist
+          build-args: |
+            WITH_WEBVIEW=${{ inputs.with_webview }}
+          cache-from: type=gha,scope=linux-${{ matrix.arch }}-webview-${{ inputs.with_webview }}
+          cache-to: type=gha,mode=max,scope=linux-${{ matrix.arch }}-webview-${{ inputs.with_webview }}
+
+      - name: List produced packages
+        if: ${{ inputs.package }}
+        run: du -sh dist/**
+
+      - name: Upload artifacts
+        if: ${{ inputs.package }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}-packages
+          path: dist/**
+          if-no-files-found: error

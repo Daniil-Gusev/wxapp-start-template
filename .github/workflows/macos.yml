@@ -1,0 +1,125 @@
+name: macOS
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        description: "Build full packages (true) or just test compilation (false)"
+        required: true
+        type: boolean
+      with_webview:
+        description: "Build with wxWebView support"
+        required: false
+        type: string
+        default: "false"
+
+jobs:
+  build:
+    name: universal / arm64 / x86_64
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install build tools
+        run: brew install gettext meson ninja > /dev/null
+
+      - name: Install packaging tools
+        if: ${{ inputs.package }}
+        run: brew install dylibbundler create-dmg > /dev/null
+
+      - name: Resolve wxWidgets version
+        id: wxver
+        run: |
+          ver=$(grep -m1 '^ARG WX_VERSION=' Dockerfile | cut -d= -f2)
+          if [ -z "$ver" ]; then
+            echo "error: could not parse WX_VERSION from Dockerfile" >&2
+            exit 1
+          fi
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+
+      - name: Cache wxWidgets universal build
+        id: wx-cache
+        uses: actions/cache@v5
+        with:
+          path: /opt/wx
+          key: wx-macos-universal-${{ steps.wxver.outputs.version }}-webview-${{ inputs.with_webview }}-${{ hashFiles('.github/workflows/macos.yml') }}
+
+      - name: Build wxWidgets (universal)
+        if: steps.wx-cache.outputs.cache-hit != 'true'
+        env:
+          WX_VERSION: ${{ steps.wxver.outputs.version }}
+          WITH_WEBVIEW: ${{ inputs.with_webview }}
+        run: |
+          set -euo pipefail
+          curl --retry 3 -L "https://github.com/wxWidgets/wxWidgets/releases/download/v${WX_VERSION}/wxWidgets-${WX_VERSION}.tar.bz2" \
+            | tar xj -C "$RUNNER_TEMP"
+          cd "$RUNNER_TEMP/wxWidgets-${WX_VERSION}"
+          mkdir build-static-release && cd build-static-release
+          webview_opt=""
+          [ "$WITH_WEBVIEW" = "true" ] && webview_opt="--enable-webview"
+          ../configure \
+            --prefix=/opt/wx \
+            --disable-shared \
+            --enable-optimise \
+            --disable-debug \
+            --disable-debug_info \
+            --disable-debug_flag \
+            --disable-tests \
+            --disable-sys-libs \
+            --with-osx_cocoa \
+            --with-macosx-version-min=10.10 \
+            --enable-universal_binary=arm64,x86_64 \
+            --with-cxx=20 \
+            --enable-mediactrl \
+            $webview_opt \
+            --enable-stc \
+            --enable-aui \
+            --enable-propgrid \
+            --enable-ribbon \
+            --enable-richtext \
+            --enable-xrc \
+            --with-opengl > /dev/null
+          make -j"$(sysctl -n hw.ncpu)" > /dev/null
+          sudo make install > /dev/null
+
+      - name: Build app for each variant
+        env:
+          WITH_WEBVIEW: ${{ inputs.with_webview }}
+        run: |
+          set -euo pipefail
+          export PATH="/opt/wx/bin:$PATH"
+          for variant in arm64 x86_64 universal; do
+            echo "::group::${variant}"
+            builddir="build-${variant}"
+            meson setup "$builddir" --wipe --native-file "toolchains/macos-${variant}-native.txt" -Dwith_webview="$WITH_WEBVIEW"
+            ninja -C "$builddir"
+            echo "::endgroup::"
+          done
+
+      - name: Package each variant
+        if: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+          export PATH="/opt/wx/bin:$PATH"
+          for variant in arm64 x86_64 universal; do
+            echo "::group::package ${variant}"
+            PKG_ARCH_LABEL="$variant" ninja -C "build-${variant}" package
+            echo "::endgroup::"
+          done
+
+      - name: Collect packages
+        if: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp build-arm64/packages/* build-x86_64/packages/* build-universal/packages/* dist/
+          du -sh dist/**
+
+      - name: Upload artifacts
+        if: ${{ inputs.package }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-packages
+          path: dist/**
+          if-no-files-found: error
