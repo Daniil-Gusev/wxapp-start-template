@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+self_dir="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+source "$self_dir/.detect_webkit.sh"
+
+if version="$(detect_webkit_version)"; then
+    case "$version" in
+        4.1) exec "$self_dir/.@APP_NAME@.webkit41" "$@" ;;
+        4.0) exec "$self_dir/.@APP_NAME@.webkit40" "$@" ;;
+    esac
+fi
+
+cat >&2 <<EOF
+@APP_NAME@: no supported webkit2gtk runtime found on this system.
+This build needs libwebkit2gtk-4.1.so.0 or libwebkit2gtk-4.0.so.37.
+Install one of, depending on your distribution:
+  - libwebkit2gtk-4.1-dev / webkit2gtk4.1   (recommended, modern distros)
+  - libwebkit2gtk-4.0-dev / webkit2gtk3 / webkit2gtk4.0  (older / enterprise distros)
+EOF
+exit 1

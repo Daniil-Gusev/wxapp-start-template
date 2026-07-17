@@ -11,7 +11,12 @@ dependencies = []
 cpu = host_machine.cpu_family()
 py3 = find_program('python3')
 
-wx_dep = dependency('wxwidgets', required: true)
+wx_modules = ['core', 'base', 'html']
+if get_option('with_webview') == true
+    wx_modules += 'webview'
+endif
+
+wx_dep = dependency('wxwidgets', required: true, modules: wx_modules)
 dependencies += wx_dep
 
 git = find_program('git', required: false)

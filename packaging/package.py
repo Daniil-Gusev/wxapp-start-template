@@ -22,7 +22,7 @@ def main():
         
         print(f"Installing to temporary destdir: {destdir}")
         subprocess.run(
-            ["meson", "install", "-C", str(build_dir), "--destdir", str(destdir), "--no-rebuild"], 
+            ["meson", "install", "--quiet", "-C", str(build_dir), "--destdir", str(destdir), "--no-rebuild"], 
             check=True
         )
 

@@ -82,6 +82,11 @@ def create_dmg(app_path: Path, dmg_path: Path, bundle_name: str, version: str, i
         print(f"error: create-dmg failed with code {result.returncode}", file=sys.stderr)
         sys.exit(result.returncode)
 
+def dmg_arch_suffix() -> str:
+    # CI passes PKG_ARCH_LABEL explicitly (arm64 / x86_64 / universal)
+    label = os.environ.get("PKG_ARCH_LABEL") or os.environ.get("TARGET_ARCH", "")
+    return label
+
 def main():
     if len(sys.argv) < 3:
         print(f"Usage: {sys.argv[0]} <bundle_name> <version>", file=sys.stderr)
@@ -132,12 +137,14 @@ def main():
             "-d", str(frameworks),
             "-p", "@executable_path/../Frameworks",
         ])
-        
+
     install_translations(src_root, prefix, resources, bundle_name)
     patch_plist(contents, icon_filename="app.icns" if has_icon else None)
 
     out_dir = Path(os.environ.get("PKG_OUT_DIR", prefix))
-    dmg_path = out_dir / f"{bundle_name}-{version}.dmg"
+    arch_suffix = dmg_arch_suffix()
+    dmg_filename = f"{bundle_name}-{version}-macos-{arch_suffix}.dmg" if arch_suffix else f"{bundle_name}-{version}-macos.dmg"
+    dmg_path = out_dir / dmg_filename
     create_dmg(app_path, dmg_path, bundle_name, version, icns_dst if has_icon else None)
 
 if __name__ == "__main__":
