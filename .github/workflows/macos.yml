@@ -92,7 +92,15 @@ jobs:
           for variant in arm64 x86_64 universal; do
             echo "::group::${variant}"
             builddir="build-${variant}"
-            meson setup "$builddir" --wipe --native-file "toolchains/macos-${variant}-native.txt" -Dwith_webview="$WITH_WEBVIEW"
+            if [ "$variant" = "universal" ]; then
+              pch_val="false"
+            else
+              pch_val="true"
+            fi
+            meson setup "$builddir" --wipe \
+              --native-file "toolchains/macos-${variant}-native.txt" \
+              -Dwith_webview="$WITH_WEBVIEW" \
+              -Db_pch="$pch_val"    
             ninja -C "$builddir"
             echo "::endgroup::"
           done
