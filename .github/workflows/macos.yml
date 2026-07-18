@@ -42,7 +42,7 @@ jobs:
         id: wx-cache
         uses: actions/cache@v5
         with:
-          path: /opt/wx
+          path: ~/wx
           key: wx-macos-universal-${{ steps.wxver.outputs.version }}-webview-${{ inputs.with_webview }}-${{ hashFiles('.github/scripts/build-wx-macos.sh') }}
 
       - name: Build wxWidgets (universal)
@@ -57,7 +57,7 @@ jobs:
           WITH_WEBVIEW: ${{ inputs.with_webview }}
         run: |
           set -euo pipefail
-          export PATH="/opt/wx/bin:$PATH"
+          export PATH="$HOME/wx/bin:$PATH"
           for variant in arm64 x86_64 universal; do
             echo "::group::${variant}"
             builddir="build-${variant}"
@@ -78,7 +78,7 @@ jobs:
         if: ${{ inputs.package }}
         run: |
           set -euo pipefail
-          export PATH="/opt/wx/bin:$PATH"
+          export PATH="$HOME/wx/bin:$PATH"
           for variant in arm64 x86_64 universal; do
             echo "::group::package ${variant}"
             PKG_ARCH_LABEL="$variant" ninja -C "build-${variant}" package
@@ -95,7 +95,7 @@ jobs:
 
       - name: Upload artifacts
         if: ${{ inputs.package }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: macos-packages
           path: dist/**

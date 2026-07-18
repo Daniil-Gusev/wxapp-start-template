@@ -4,9 +4,7 @@ set -euo pipefail
 : "${WX_VERSION:?WX_VERSION not set}"
 : "${WITH_WEBVIEW:?WITH_WEBVIEW not set}"
 
-sudo mkdir -p /opt/wx
-sudo chown "$(id -u):$(id -g)" /opt/wx
-
+mkdir "$HOME/wx"
 curl --retry 3 -L "https://github.com/wxWidgets/wxWidgets/releases/download/v${WX_VERSION}/wxWidgets-${WX_VERSION}.tar.bz2" \
   | tar xj -C "$RUNNER_TEMP"
 cd "$RUNNER_TEMP/wxWidgets-${WX_VERSION}"
@@ -16,7 +14,7 @@ webview_opt=""
 [ "$WITH_WEBVIEW" = "true" ] && webview_opt="--enable-webview"
 
 ../configure \
-  --prefix=/opt/wx \
+  --prefix="$HOME/wx" \
   --disable-shared \
   --enable-optimise \
   --disable-debug \
