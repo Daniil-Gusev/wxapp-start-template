@@ -43,45 +43,14 @@ jobs:
         uses: actions/cache@v5
         with:
           path: /opt/wx
-          key: wx-macos-universal-${{ steps.wxver.outputs.version }}-webview-${{ inputs.with_webview }}-${{ hashFiles('.github/workflows/macos.yml') }}
+          key: wx-macos-universal-${{ steps.wxver.outputs.version }}-webview-${{ inputs.with_webview }}-${{ hashFiles('.github/scripts/build-wx-macos.sh') }}
 
       - name: Build wxWidgets (universal)
         if: steps.wx-cache.outputs.cache-hit != 'true'
         env:
           WX_VERSION: ${{ steps.wxver.outputs.version }}
           WITH_WEBVIEW: ${{ inputs.with_webview }}
-        run: |
-          set -euo pipefail
-          curl --retry 3 -L "https://github.com/wxWidgets/wxWidgets/releases/download/v${WX_VERSION}/wxWidgets-${WX_VERSION}.tar.bz2" \
-            | tar xj -C "$RUNNER_TEMP"
-          cd "$RUNNER_TEMP/wxWidgets-${WX_VERSION}"
-          mkdir build-static-release && cd build-static-release
-          webview_opt=""
-          [ "$WITH_WEBVIEW" = "true" ] && webview_opt="--enable-webview"
-          ../configure \
-            --prefix=/opt/wx \
-            --disable-shared \
-            --enable-optimise \
-            --disable-debug \
-            --disable-debug_info \
-            --disable-debug_flag \
-            --disable-tests \
-            --disable-sys-libs \
-            --with-osx_cocoa \
-            --with-macosx-version-min=10.10 \
-            --enable-universal_binary=arm64,x86_64 \
-            --with-cxx=20 \
-            --enable-mediactrl \
-            $webview_opt \
-            --enable-stc \
-            --enable-aui \
-            --enable-propgrid \
-            --enable-ribbon \
-            --enable-richtext \
-            --enable-xrc \
-            --with-opengl > /dev/null
-          make -j"$(sysctl -n hw.ncpu)" > /dev/null
-          sudo make install > /dev/null
+        run: .github/scripts/build-wx-macos.sh
 
       - name: Build app for each variant
         env:
@@ -100,7 +69,7 @@ jobs:
             meson setup "$builddir" --wipe \
               --native-file "toolchains/macos-${variant}-native.txt" \
               -Dwith_webview="$WITH_WEBVIEW" \
-              -Db_pch="$pch_val"    
+              -Db_pch="$pch_val"
             ninja -C "$builddir"
             echo "::endgroup::"
           done
