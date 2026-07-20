@@ -16,6 +16,9 @@ on:
 jobs:
   build:
     name: ${{ matrix.arch }}
+    env:
+      DOCKER_BUILD_SUMMARY: false
+      DOCKER_BUILD_RECORD_UPLOAD: false  
     strategy:
       fail-fast: false
       matrix:

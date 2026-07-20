@@ -16,6 +16,9 @@ on:
 jobs:
   build:
     name: amd64
+    env:
+      DOCKER_BUILD_SUMMARY: false
+      DOCKER_BUILD_RECORD_UPLOAD: false  
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
